@@ -25,7 +25,12 @@ import fhirclient.models.extension as ex
 
 # %%
 ops_data = pd.read_csv('./ops_subs_merged_edit_test_neu.csv', encoding = 'ISO-8859-1')
+ops_data['Einheit_Wert_min'] = ops_data['Einheit_Wert_min'].str.replace(',', '.').astype(float)
+ops_data['Einheit_Wert_max'] = ops_data['Einheit_Wert_max'].str.replace(',', '.').astype(float)
 ops_data.head()
+
+# %%
+ops_data_new = pd.to_numeric(ops_data['Einheit_Wert_min'])
 
 # %%
 #define the server to post to 
@@ -197,7 +202,7 @@ for index, row in ops_data.iterrows():
         msDosage.site = msSiteCode
         '''
 
-        # Doage.method
+        # Dosage.method
         '''
         msMethodCode = cc.CodeableConcept()
         msMethodCodeCoding = co.Coding()
@@ -211,7 +216,6 @@ for index, row in ops_data.iterrows():
         # doseAndRate
         msDoseAndRate = d.DosageDoseAndRate()
 
-        # doseQuantity (SimpleQuantity)
         if row[16] is not None:
             # doseRange
             msDoseRange = ra.Range()
@@ -235,15 +239,9 @@ for index, row in ops_data.iterrows():
             msDoseRange.high = msDoseRangeHigh
             msDoseAndRate.doseRange = msDoseRange
             msDosage.doseAndRate = [msDoseAndRate]            
-            msDoseQuantity = q.Quantity()
-            msDoseQuantity.value = row[9]
-            msDoseQuantity.unit = f'{row[12]}'
-            msDoseQuantity.system = 'http://unitsofmeasure.org'
-            msDoseQuantity.code = f'{row[11]}'
 
-            msDoseAndRate.doseQuantity = msDoseQuantity
-            msDosage.doseAndRate = [msDoseAndRate]
         else:
+            # doseQuantity (SimpleQuantity)
             msDoseQuantity = q.Quantity()
             msDoseQuantity.value = row[9]
             msDoseQuantity.unit = f'{row[12]}'
