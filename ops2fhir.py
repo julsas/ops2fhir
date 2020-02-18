@@ -119,7 +119,7 @@ for index, row in ops_data.iterrows():
         medicationStatement.medicationReference = msMedRef
 
         fname = 'Medication-' + row[0]+ '.json'
-        with open(fname, 'w') as outfile:
+        with open('./output/' + fname, 'w') as outfile:
             json.dump(medication.as_json(), outfile, indent=4)
         print("Medication json written to file {fn}".format(fn=fname))
 
@@ -143,7 +143,7 @@ for index, row in ops_data.iterrows():
         medicationStatement.subject = msSubj
 
         fname = 'Patient-' + f'{patId}' + '.json'
-        with open(fname, 'w') as outfile:
+        with open('./output/' + fname, 'w') as outfile:
             json.dump(patient.as_json(), outfile, indent=4)
         print("Patient json written to file {fn}".format(fn=fname))
         
@@ -251,7 +251,7 @@ for index, row in ops_data.iterrows():
         medicationStatement.dosage = [msDosage]
 
         fname = 'MedicationStatement' + f'{row[0]}' + '.json'
-        with open(fname, 'w') as outfile:
+        with open('./output/' + fname, 'w') as outfile:
             json.dump(medicationStatement.as_json(), outfile, indent=4)
         print("MedicationStatement json written to file {fn}".format(fn=fname))
 

@@ -1,0 +1,32 @@
+{
+    "id": "90dd8b8d-752a-405c-9db1-ba66fc10f478",
+    "meta": {
+        "profile": [
+            "https://www.medizininformatik-initiative.de/fhir/core/StructureDefinition/Medication"
+        ]
+    },
+    "ingredient": [
+        {
+            "itemCodeableConcept": {
+                "coding": [
+                    {
+                        "extension": [
+                            {
+                                "url": "https://www.medizininformatik-initiative.de/fhir/core/StructureDefinition/wirkstofftyp",
+                                "valueCoding": {
+                                    "code": "IN",
+                                    "display": "ingredient",
+                                    "system": "http://www.nlm.nih.gov/research/umls/rxnorm"
+                                }
+                            }
+                        ],
+                        "code": "26980",
+                        "display": "voriconazole",
+                        "system": "http://fhir.de/CodeSystem/ask"
+                    }
+                ]
+            }
+        }
+    ],
+    "resourceType": "Medication"
+}

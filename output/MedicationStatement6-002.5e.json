@@ -1,0 +1,48 @@
+{
+    "meta": {
+        "profile": [
+            "https://www.medizininformatik-initiative.de/fhir/core/StructureDefinition/MedicationStatement"
+        ]
+    },
+    "dosage": [
+        {
+            "doseAndRate": [
+                {
+                    "doseRange": {
+                        "high": {
+                            "code": "g",
+                            "system": "http://unitsofmeasure.org",
+                            "unit": "gram",
+                            "value": 45.5
+                        },
+                        "low": {
+                            "code": "g",
+                            "system": "http://unitsofmeasure.org",
+                            "unit": "gram",
+                            "value": 40.5
+                        }
+                    }
+                }
+            ],
+            "route": {
+                "coding": [
+                    {
+                        "code": "20053000",
+                        "display": "Oral use",
+                        "system": "http://standardterms.edqm.eu"
+                    }
+                ]
+            },
+            "text": "Orale Applikation von 40,50 g bis unter 45,50 g Voriconazol"
+        }
+    ],
+    "effectiveDateTime": "2020-02-13T12:00:00+01:00",
+    "medicationReference": {
+        "reference": "Medication/90dd8b8d-752a-405c-9db1-ba66fc10f478"
+    },
+    "status": "completed",
+    "subject": {
+        "reference": "Patient/598f8b59-aa95-406f-880c-ddbdc634b179"
+    },
+    "resourceType": "MedicationStatement"
+}
