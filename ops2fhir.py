@@ -30,9 +30,6 @@ ops_data['Einheit_Wert_max'] = ops_data['Einheit_Wert_max'].str.replace(',', '.'
 ops_data.head()
 
 # %%
-ops_data_new = pd.to_numeric(ops_data['Einheit_Wert_min'])
-
-# %%
 #define the server to post to 
 # fhir_test_server = 'http://localhost:4080/'
 fhir_test_server = 'http://s-hdp-diz.charite.de:28181'
