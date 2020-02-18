@@ -213,15 +213,6 @@ for index, row in ops_data.iterrows():
 
         # doseQuantity (SimpleQuantity)
         if row[16] is not None:
-            msDoseQuantity = q.Quantity()
-            msDoseQuantity.value = row[9]
-            msDoseQuantity.unit = f'{row[12]}'
-            msDoseQuantity.system = 'http://unitsofmeasure.org'
-            msDoseQuantity.code = f'{row[11]}'
-
-            msDoseAndRate.doseQuantity = msDoseQuantity
-            msDosage.doseAndRate = [msDoseAndRate]
-        else:
             # doseRange
             msDoseRange = ra.Range()
 
@@ -243,6 +234,23 @@ for index, row in ops_data.iterrows():
             msDoseRange.low = msDoseRangeLow
             msDoseRange.high = msDoseRangeHigh
             msDoseAndRate.doseRange = msDoseRange
+            msDosage.doseAndRate = [msDoseAndRate]            
+            msDoseQuantity = q.Quantity()
+            msDoseQuantity.value = row[9]
+            msDoseQuantity.unit = f'{row[12]}'
+            msDoseQuantity.system = 'http://unitsofmeasure.org'
+            msDoseQuantity.code = f'{row[11]}'
+
+            msDoseAndRate.doseQuantity = msDoseQuantity
+            msDosage.doseAndRate = [msDoseAndRate]
+        else:
+            msDoseQuantity = q.Quantity()
+            msDoseQuantity.value = row[9]
+            msDoseQuantity.unit = f'{row[12]}'
+            msDoseQuantity.system = 'http://unitsofmeasure.org'
+            msDoseQuantity.code = f'{row[11]}'
+
+            msDoseAndRate.doseQuantity = msDoseQuantity
             msDosage.doseAndRate = [msDoseAndRate]
 
         medicationStatement.dosage = [msDosage]
