@@ -116,3 +116,6 @@ dmypy.json
 
 # JetBrains files
 .idea
+
+# Project output files
+.output/
