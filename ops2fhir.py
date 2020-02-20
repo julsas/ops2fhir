@@ -1,30 +1,32 @@
-#%%
 import json
-from json import dumps
 import uuid
 import math
 import pandas as pd
 import numpy as np
 from requests import get, post, put
-import fhirclient
-import fhirclient.models.medicationstatement as ms
-import fhirclient.models.medication as m
-import fhirclient.models.patient as p
-import fhirclient.models.dosage as d
-import fhirclient.models.timing as t
-import fhirclient.models.fhirreference as fr
-import fhirclient.models.meta as ma
-import fhirclient.models.fhirdate as fd
-import fhirclient.models.period as prd
-import fhirclient.models.codeableconcept as cc
-import fhirclient.models.coding as co
-import fhirclient.models.quantity as q
-import fhirclient.models.ratio as r
-import fhirclient.models.range as ra
-import fhirclient.models.humanname as hn
-import fhirclient.models.extension as ex 
+from fhirclient.models import (
+    medicationstatement,
+    medication,
+    patient,
+    dosage,
+    timing,
+    fhirreference,
+    meta,
+    fhirdate,
+    period,
+    codeableconcept,
+    coding,
+    quantity,
+    ratio,
+    range,
+    humanname,
+    extension
+)
 
-# %%
+# TODO:
+def create_medication(ops_data):
+
+
 ops_data = pd.read_csv('./ops_subs_merged_edit_test_neu.csv', encoding = 'ISO-8859-1')
 ops_data['Einheit_Wert_min'] = ops_data['Einheit_Wert_min'].str.replace(',', '.').astype(float)
 ops_data['Einheit_Wert_max'] = ops_data['Einheit_Wert_max'].str.replace(',', '.').astype(float)
@@ -41,12 +43,12 @@ headers = {
     }
 
 # %%
-medicationStatement = ms.MedicationStatement()
+medicationStatement = medicationstatement.MedicationStatement()
 for index, row in ops_data.iterrows():
     # with open(f"{row[0]}.json", "w") as f:
 
         # das MII Profil in den Metadaten angeben
-        msMeta = ma.Meta()
+        msMeta = meta.Meta()
         msMeta.profile = ['https://www.medizininformatik-initiative.de/fhir/core/StructureDefinition/MedicationStatement']
         medicationStatement.meta = msMeta
 
@@ -54,22 +56,22 @@ for index, row in ops_data.iterrows():
         medicationStatement.status = 'completed'
 
         # medication[x]
-        medication = m.Medication()
+        medication = medication.Medication()
 
         medId = uuid.uuid4()
         medication.id = str(medId)
 
-        medMeta = ma.Meta()
+        medMeta = meta.Meta()
         medMeta.profile = ['https://www.medizininformatik-initiative.de/fhir/core/StructureDefinition/Medication']
         medication.meta = medMeta
 
-        medIngredient = m.MedicationIngredient()
+        medIngredient = medication.MedicationIngredient()
 
         # ingredientType
-        ingredientExt = ex.Extension()
+        ingredientExt = extension.Extension()
         ingredientExt.url = 'https://www.medizininformatik-initiative.de/fhir/core/StructureDefinition/wirkstofftyp'
 
-        ingredientExtCoding = co.Coding()
+        ingredientExtCoding = coding.Coding()
         ingredientExtCoding.system = 'http://www.nlm.nih.gov/research/umls/rxnorm'
         ingredientExtCoding.code = 'IN'
         ingredientExtCoding.display = 'ingredient'
@@ -80,8 +82,8 @@ for index, row in ops_data.iterrows():
         if row[40] is not None:
             pass
         else:
-            ingredientCode = cc.CodeableConcept()
-            ingredientCodeCoding = co.Coding()
+            ingredientCode = codeableconcept.CodeableConcept()
+            ingredientCodeCoding = coding.Coding()
             ingredientCodeCoding.system = 'http://fdasis.nlm.nih.gov'
             ingredientCodeCoding.code = f'{row[40]}'
             ingredientCodeCoding.display = f'{row[38]}'
@@ -92,8 +94,8 @@ for index, row in ops_data.iterrows():
         if np.isnan(row[41]):
             pass
         else:
-            ingredientCode = cc.CodeableConcept()
-            ingredientCodeCoding = co.Coding()
+            ingredientCode = codeableconcept.CodeableConcept()
+            ingredientCodeCoding = coding.Coding()
             ingredientCodeCoding.system = 'http://fhir.de/CodeSystem/ask'
             ingredientCodeCoding.code = f'{row[41]}'
             ingredientCodeCoding.display = f'{row[38]}'
@@ -104,8 +106,8 @@ for index, row in ops_data.iterrows():
         if row[42] is not None:
             pass
         else:
-            ingredientCode = cc.CodeableConcept()
-            ingredientCodeCoding = co.Coding()
+            ingredientCode = codeableconcept.CodeableConcept()
+            ingredientCodeCoding = coding.Coding()
             ingredientCodeCoding.system = 'urn:oid:2.16.840.1.113883.6.61'
             ingredientCodeCoding.code = f'{row[42]}'
             ingredientCodeCoding.display = f'{row[38]}'
@@ -115,7 +117,7 @@ for index, row in ops_data.iterrows():
 
         medication.ingredient = [medIngredient]
 
-        msMedRef = fr.FHIRReference()
+        msMedRef = fhirreference.FHIRReference()
         msMedRef.reference = 'Medication/' + str(medId)
         medicationStatement.medicationReference = msMedRef
 
@@ -125,21 +127,21 @@ for index, row in ops_data.iterrows():
         print("Medication json written to file {fn}".format(fn=fname))
 
         #first validate against the profile on the server
-        req = post(f'{fhir_test_server}/Medication/$validate', headers = headers, data = dumps(medication.as_json()))
+        req = post(f'{fhir_test_server}/Medication/$validate', headers = headers, data = json.dumps(medication.as_json()))
         print(req.status_code)
 
         #if resource is valid
         if req.status_code == 200:
-            req1 = post(f'{fhir_test_server}/Medication', headers = headers, data = dumps(medication.as_json()))
+            req1 = post(f'{fhir_test_server}/Medication', headers = headers, data = json.dumps(medication.as_json()))
             print(req1.status_code)
 
         # subject
-        patient = p.Patient()
+        patient = patient.Patient()
 
         patId = uuid.uuid4()
         patient.id = str(patId)
 
-        msSubj = fr.FHIRReference()
+        msSubj = fhirreference.FHIRReference()
         msSubj.reference = 'Patient/' + str(patId)
         medicationStatement.subject = msSubj
 
@@ -149,12 +151,12 @@ for index, row in ops_data.iterrows():
         print("Patient json written to file {fn}".format(fn=fname))
         
         #first validate against the profile on the server
-        req = post(f'{fhir_test_server}/Patient/$validate', headers = headers, data = dumps(patient.as_json()))
+        req = post(f'{fhir_test_server}/Patient/$validate', headers = headers, data = json.dumps(patient.as_json()))
         print(req.status_code)
 
         #if resource is valid
         if req.status_code == 200:
-            req1 = post(f'{fhir_test_server}/Patient', headers = headers, data = dumps(patient.as_json()))
+            req1 = post(f'{fhir_test_server}/Patient', headers = headers, data = json.dumps(patient.as_json()))
             print(req1.status_code)
         
         # context
@@ -162,7 +164,7 @@ for index, row in ops_data.iterrows():
         # effective[x]
         # dateTime
 
-        msDate = fd.FHIRDate("2020-02-13T12:00:00+01:00")
+        msDate = fhirdate.FHIRDate("2020-02-13T12:00:00+01:00")
         medicationStatement.effectiveDateTime = msDate
 
         # effective[x]
@@ -175,14 +177,14 @@ for index, row in ops_data.iterrows():
         '''
 
         # Dosage
-        msDosage = d.Dosage()
+        msDosage = dosage.Dosage()
 
         # Dosage.text
         msDosage.text = f'{row[1]}'
 
         # Dosage.route
-        msRouteCode = cc.CodeableConcept()
-        msRouteCodeCoding = co.Coding()
+        msRouteCode = codeableconcept.CodeableConcept()
+        msRouteCodeCoding = coding.Coding()
         msRouteCodeCoding.system = 'http://standardterms.edqm.eu'
         msRouteCodeCoding.code = f'{row[14]}'
         msRouteCodeCoding.display = f'{row[15]}'
@@ -212,23 +214,23 @@ for index, row in ops_data.iterrows():
         '''
 
         # doseAndRate
-        msDoseAndRate = d.DosageDoseAndRate()
+        msDoseAndRate = dosage.DosageDoseAndRate()
 
         # if isinstance(row[16], float) == True:
         if pd.isnull(row[10]) == False:
             # doseRange
-            msDoseRange = ra.Range()
+            msDoseRange = range.Range()
 
             # low
-            msDoseRangeLow = q.Quantity()
+            msDoseRangeLow = quantity.Quantity()
             msDoseRangeLow.value = row[9]
             msDoseRangeLow.unit = f'{row[12]}'
             msDoseRangeLow.system = 'http://unitsofmeasure.org'
             msDoseRangeLow.code = f'{row[11]}'
 
             #high
-            msDoseRangeHigh = q.Quantity()
-            msDoseRangeHigh = q.Quantity()
+            msDoseRangeHigh = quantity.Quantity()
+            msDoseRangeHigh = quantity.Quantity()
             msDoseRangeHigh.value = row[10]
             msDoseRangeHigh.unit = f'{row[12]}'
             msDoseRangeHigh.system = 'http://unitsofmeasure.org'
@@ -241,7 +243,7 @@ for index, row in ops_data.iterrows():
 
         else:
             # doseQuantity (SimpleQuantity)
-            msDoseQuantity = q.Quantity()
+            msDoseQuantity = quantity.Quantity()
             msDoseQuantity.value = row[9]
             msDoseQuantity.unit = f'{row[12]}'
             msDoseQuantity.system = 'http://unitsofmeasure.org'
@@ -258,10 +260,13 @@ for index, row in ops_data.iterrows():
         print("MedicationStatement json written to file {fn}".format(fn=fname))
 
         #first validate against the profile on the server
-        req = post(f'{fhir_test_server}/MedicationStatement/$validate', headers = headers, data = dumps(medicationStatement.as_json()))
+        req = post(f'{fhir_test_server}/MedicationStatement/$validate', headers = headers, data = json.dumps(medicationStatement.as_json()))
         print(req.status_code)
 
         #if resource is valid
         if req.status_code == 200:
-            req1 = post(f'{fhir_test_server}/MedicationStatement', headers = headers, data = dumps(medicationStatement.as_json()))
+            req1 = post(f'{fhir_test_server}/MedicationStatement', headers = headers, data = json.dumps(medicationStatement.as_json()))
             print(req1.status_code)
+
+ if __name__ == '__main__':
+     ops_data = pd.read_csv('./ops_subs_merged_edit_test_neu.csv', encoding='ISO-8859-1')
