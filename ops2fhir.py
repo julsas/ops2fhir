@@ -27,12 +27,12 @@ from fhirclient.models import (
 def create_medication(col, meta_profile):
     pat_medication = medication.Medication()
     pat_medication.meta = meta_profile
-    pat_medication.id = create_unique_id()
+    #pat_medication.id = create_unique_id()
     # TODO: fill Medication object
-    pat_med_ingredient = medication.MedicationIngredient()
-    # TODO: fill MedicationIngredient object
+    pat_med_ingredient = create_ingredient(col)
+    pat_medication.ingredient = pat_med_ingredient
 
-    return pat_medication, pat_med_ingredient
+    return pat_medication
 
 # TODO: function to create MedicationStatement and validate it against server.
 def create_medication_statement(col, meta_profile, medication_id, patient_id):
@@ -128,149 +128,67 @@ def create_ingredient(col):
 
     ingredient_ext.valueCoding = ingredient_ext_coding
 
-    ingredient_codes = []
+    ingredient_code = codeableconcept.CodeableConcept()
+    ingredient_codings = []
 
     # ingredients
     if col['UNII_Substanz_allg'] is not None:
         system_unii = 'http://fdasis.nlm.nih.gov'
         code_unii = col['UNII_Substanz_allg']
         ingredient_code_unii = create_ingredient_code_x(system_unii, code_unii, ingredient_ext)
-        ingredient_codes.append(ingredient_code_unii)
+        ingredient_codings.append(ingredient_code_unii)
 
     if not(np.isnan(col['ASK_Substanz_allg'])):
         system_ask = 'http://fhir.de/CodeSystem/ask'
-        code_ask = col['ASK_Substanz_allg']
+        code_ask = str(col['ASK_Substanz_allg'])
         ingredient_code_ask = create_ingredient_code_x(system_ask, code_ask, ingredient_ext)
-        ingredient_codes.append(ingredient_code_ask)
+        ingredient_codings.append(ingredient_code_ask)
 
 
     if col['CAS_Substanz_allg'] is not None:
         system_cas = 'urn:oid:2.16.840.1.113883.6.61'
         code_cas = col['CAS_Substanz_allg']
         ingredient_code_cas = create_ingredient_code_x(system_cas, code_cas, ingredient_ext)
-        ingredient_codes.append(ingredient_code_cas)
+        ingredient_codings.append(ingredient_code_cas)
 
-    med_ingredient.itemCodeableConcept = ingredient_codes
+    ingredient_code.coding = ingredient_codings
+    med_ingredient.itemCodeableConcept = ingredient_code
+
 
     return [med_ingredient]
 
+# Helper function for create_ingredient()
 def create_ingredient_code_x(system, code, ingredient_ext):
-    ingredient_code = codeableconcept.CodeableConcept()
     ingredient_code_coding = coding.Coding()
     ingredient_code_coding.system = system
     ingredient_code_coding.code = code
     ingredient_code_coding.display = col['Substanz_allg_engl_INN_oder_sonst']
     ingredient_code_coding.extension = [ingredient_ext]
-    ingredient_code.coding = [ingredient_code_coding]
 
-    return ingredient_code
+    return ingredient_code_coding
 
 # TODO: function shall make sure that the created UUIDs are unique (not yet in the server)
 def create_unique_id():
-    new_uuid = uuid.uuid4()
+    new_uuid = str(uuid.uuid4())
     # TODO: get all IDs from server and compare to new ID
 
     return new_uuid
 
 # TODO: function to start session with vonk client
-def vonk_client(server_url, headers, charite_proxy, verification):
-    vonk_session = requests.session(server_url)
+def vonk_client(server_url, headers, verification):
+    vonk_session = requests.session()
     # TODO: Proxy parameter should be optional!!
-    vonk_session.proxies = charite_proxy
     vonk_session.verify = verification
+    vonk_session.headers = headers
 
     return vonk_session
 
-# TODO: connection to fhir_patient_generator to create patient-bundles?
 '''
-headers = {
-    'Accept': 'application/fhir+json; fhirVersion=4.0',
-    'Content-Type': 'application/fhir+json; fhirVersion=4.0'
-}
-
-# %%
-medicationStatement = medicationstatement.MedicationStatement()
 for index, row in ops_data.iterrows():
     # with open(f"{row[0]}.json", "w") as f:
 
-    # das MII Profil in den Metadaten angeben
-    msMeta = meta.Meta()
-    msMeta.profile = ['https://www.medizininformatik-initiative.de/fhir/core/StructureDefinition/MedicationStatement']
-    medicationStatement.meta = msMeta
-
     # sollte bei retrospektiver Betrachtung auf fix auf 'completed' stehen
     medicationStatement.status = 'completed'
-
-    # medication[x]
-    pat_medication = medication.Medication()
-
-    medId = uuid.uuid4()
-    pat_medication.id = str(medId)
-
-    medMeta = meta.Meta()
-    medMeta.profile = ['https://www.medizininformatik-initiative.de/fhir/core/StructureDefinition/Medication']
-    pat_medication.meta = medMeta
-
-    medIngredient = medication.MedicationIngredient()
-
-    # ingredientType
-    ingredientExt = extension.Extension()
-    ingredientExt.url = 'https://www.medizininformatik-initiative.de/fhir/core/StructureDefinition/wirkstofftyp'
-
-    ingredientExtCoding = coding.Coding()
-    ingredientExtCoding.system = 'http://www.nlm.nih.gov/research/umls/rxnorm'
-    ingredientExtCoding.code = 'IN'
-    ingredientExtCoding.display = 'ingredient'
-
-    ingredientExt.valueCoding = ingredientExtCoding
-
-    # ingredients
-    if row[40] is not None:
-        pass
-    else:
-        ingredientCode = codeableconcept.CodeableConcept()
-        ingredientCodeCoding = coding.Coding()
-        ingredientCodeCoding.system = 'http://fdasis.nlm.nih.gov'
-        ingredientCodeCoding.code = f'{row[40]}'
-        ingredientCodeCoding.display = f'{row[38]}'
-        ingredientCodeCoding.extension = [ingredientExt]
-        ingredientCode.coding = [ingredientCodeCoding]
-        medIngredient.itemCodeableConcept = ingredientCode
-
-    if np.isnan(row[41]):
-        pass
-    else:
-        ingredientCode = codeableconcept.CodeableConcept()
-        ingredientCodeCoding = coding.Coding()
-        ingredientCodeCoding.system = 'http://fhir.de/CodeSystem/ask'
-        ingredientCodeCoding.code = f'{row[41]}'
-        ingredientCodeCoding.display = f'{row[38]}'
-        ingredientCodeCoding.extension = [ingredientExt]
-        ingredientCode.coding = [ingredientCodeCoding]
-        medIngredient.itemCodeableConcept = ingredientCode
-
-    if row[42] is not None:
-        pass
-    else:
-        ingredientCode = codeableconcept.CodeableConcept()
-        ingredientCodeCoding = coding.Coding()
-        ingredientCodeCoding.system = 'urn:oid:2.16.840.1.113883.6.61'
-        ingredientCodeCoding.code = f'{row[42]}'
-        ingredientCodeCoding.display = f'{row[38]}'
-        ingredientCodeCoding.extension = [ingredientExt]
-        ingredientCode.coding = [ingredientCodeCoding]
-        medIngredient.itemCodeableConcept = ingredientCode
-
-    pat_medication.ingredient = [medIngredient]
-
-    msMedRef = fhirreference.FHIRReference()
-    msMedRef.reference = 'Medication/' + str(medId)
-    medicationStatement.medicationReference = msMedRef
-
-    fname = 'Medication-' + row[0]+ '.json'
-    with open('./output/' + fname, 'w') as outfile:
-        json.dump(pat_medication.as_json(), outfile, indent=4)
-    print("Medication json written to file {fn}".format(fn=fname))
 
     #first validate against the profile on the server
     req = requests.post(f'{fhir_test_server}/Medication/$validate', headers = headers, data = json.dumps(pat_medication.as_json()))
@@ -281,21 +199,6 @@ for index, row in ops_data.iterrows():
         req1 = requests.post(f'{fhir_test_server}/Medication', headers = headers, data = json.dumps(pat_medication.as_json()))
         print(req1.status_code)
 
-    # subject
-    patient = patient.Patient()
-
-    patId = uuid.uuid4()
-    patient.id = str(patId)
-
-    msSubj = fhirreference.FHIRReference()
-    msSubj.reference = 'Patient/' + str(patId)
-    medicationStatement.subject = msSubj
-
-    fname = 'Patient-' + f'{patId}' + '.json'
-    with open('./output/' + fname, 'w') as outfile:
-        json.dump(patient.as_json(), outfile, indent=4)
-    print("Patient json written to file {fn}".format(fn=fname))
-
     #first validate against the profile on the server
     req = requests.post(f'{fhir_test_server}/Patient/$validate', headers = headers, data = json.dumps(patient.as_json()))
     print(req.status_code)
@@ -305,93 +208,12 @@ for index, row in ops_data.iterrows():
         req1 = requests.post(f'{fhir_test_server}/Patient', headers = headers, data = json.dumps(patient.as_json()))
         print(req1.status_code)
 
-    # context
-
-    # effective[x]
-    # dateTime
-
-
-
     # effective[x]
     # Period
-    msPeriod = prd.Period()
-    msPeriod.start = fd.FHIRDate("2020-02-03T12:00:00+01:00")
-    msPeriod.end = fd.FHIRDate("2020-02-04T12:00:00+01:00")
-    medicationStatement.effectivePeriod = msPeriod
-
-    # Dosage
-    msDosage = dosage.Dosage()
-
-    # Dosage.text
-    msDosage.text = f'{row[1]}'
-
-    # Dosage.route
-    msRouteCode = codeableconcept.CodeableConcept()
-    msRouteCodeCoding = coding.Coding()
-    msRouteCodeCoding.system = 'http://standardterms.edqm.eu'
-    msRouteCodeCoding.code = f'{row[14]}'
-    msRouteCodeCoding.display = f'{row[15]}'
-    msRouteCode.coding = [msRouteCodeCoding]
-    msDosage.route = msRouteCode
-
-    # Dosage.site
-    msSiteCode = cc.CodeableConcept()
-    msSiteCodeCoding = co.Coding()
-    msSiteCodeCoding.system = ''
-    msSiteCodeCoding.code = ''
-    msSiteCodeCoding.display = ''
-    msSiteCode.coding = [msSiteCodeCoding]
-    msDosage.site = msSiteCode
-
-    # Dosage.method
-    msMethodCode = cc.CodeableConcept()
-    msMethodCodeCoding = co.Coding()
-    msMethodCodeCoding.system = ''
-    msMethodCodeCoding.code = ''
-    msMethodCodeCoding.display = ''
-    msMethodCode.coding = [msMethodCodeCoding]
-    msDosage.method = msMethodCode
-
-    # doseAndRate
-    msDoseAndRate = dosage.DosageDoseAndRate()
-
-    # if isinstance(row[16], float) == True:
-    if pd.isnull(row[10]) == False:
-        # doseRange
-        msDoseRange = range.Range()
-
-        # low
-        msDoseRangeLow = quantity.Quantity()
-        msDoseRangeLow.value = row[9]
-        msDoseRangeLow.unit = f'{row[12]}'
-        msDoseRangeLow.system = 'http://unitsofmeasure.org'
-        msDoseRangeLow.code = f'{row[11]}'
-
-        #high
-        msDoseRangeHigh = quantity.Quantity()
-        msDoseRangeHigh = quantity.Quantity()
-        msDoseRangeHigh.value = row[10]
-        msDoseRangeHigh.unit = f'{row[12]}'
-        msDoseRangeHigh.system = 'http://unitsofmeasure.org'
-        msDoseRangeHigh.code = f'{row[11]}'
-
-        msDoseRange.low = msDoseRangeLow
-        msDoseRange.high = msDoseRangeHigh
-        msDoseAndRate.doseRange = msDoseRange
-        msDosage.doseAndRate = [msDoseAndRate]
-
-    else:
-        # doseQuantity (SimpleQuantity)
-        msDoseQuantity = quantity.Quantity()
-        msDoseQuantity.value = row[9]
-        msDoseQuantity.unit = f'{row[12]}'
-        msDoseQuantity.system = 'http://unitsofmeasure.org'
-        msDoseQuantity.code = f'{row[11]}'
-
-        msDoseAndRate.doseQuantity = msDoseQuantity
-        msDosage.doseAndRate = [msDoseAndRate]
-
-    medicationStatement.dosage = [msDosage]
+    #msPeriod = prd.Period()
+    #msPeriod.start = fd.FHIRDate("2020-02-03T12:00:00+01:00")
+    #msPeriod.end = fd.FHIRDate("2020-02-04T12:00:00+01:00")
+    #medicationStatement.effectivePeriod = msPeriod
 
     fname = 'MedicationStatement' + f'{row[0]}' + '.json'
     with open('./output/' + fname, 'w') as outfile:
@@ -409,12 +231,9 @@ for index, row in ops_data.iterrows():
 '''
 if __name__ == '__main__':
     ops_data = pd.read_csv('./ops_subs_merged_edit_test_neu.csv', encoding='ISO-8859-1')
+    # fix csv values to avoid confusion with delimiter ','
     ops_data['Einheit_Wert_min'] = ops_data['Einheit_Wert_min'].str.replace(',', '.').astype(float)
     ops_data['Einheit_Wert_max'] = ops_data['Einheit_Wert_max'].str.replace(',', '.').astype(float)
-
-    for row, col in ops_data.iterrows():
-        med_statement_dosage = create_dosage(col)
-        medication_ingredient = create_ingredient(col)
 
     # Vonk server data
     # fhir_test_server = 'http://localhost:4080/'
@@ -424,16 +243,29 @@ if __name__ == '__main__':
         'Content-Type': 'application/fhir+json; fhirVersion=4.0'
     }
 
-    # create Medication
+    vonk_session = vonk_client(server_url, headers, False)
+
+    # Define profiles
     meta_medication = meta.Meta()
     meta_medication.profile = ['https://www.medizininformatik-initiative.de/fhir/core/StructureDefinition/Medication']
-    pat_medication = create_medication(ops_data, server_url, meta_medication)
-
-    # create MedicationStatement
-    # MII MedicationStatement profile in meta
     meta_medication_statement = meta.Meta()
-    meta_medication_statement.profile = ['https://www.medizininformatik-initiative.de/fhir/core/StructureDefinition/MedicationStatement']
-    pat_medication_statement = create_medication_statement(ops_data, server_url, meta_medication_statement)
+    meta_medication_statement.profile = [
+        'https://www.medizininformatik-initiative.de/fhir/core/StructureDefinition/MedicationStatement']
 
-
-
+    for row, col in ops_data.iterrows():
+        #med_statement_dosage = create_dosage(col)
+        #medication_ingredient = create_ingredient(col)
+        pat_medication = create_medication(col, meta_medication)
+        # validate against profile
+        validate_medication = vonk_session.post(f'{server_url}/Medication/$validate', data=json.dumps(pat_medication.as_json()))
+        # if valid with profile, post to server
+        if validate_medication.status_code == 200:
+            post_medication = vonk_session.post(f'{server_url}/Medication/', data=json.dumps(pat_medication.as_json()))
+            # TODO: reference fhir_patient_generator
+            pat_id = '0000'
+            if post_medication.status_code == 201:
+                posted_medication = json.loads(post_medication.text)
+                med_id = posted_medication['id']
+                pat_med_statement = create_medication_statement(col, meta_medication_statement, med_id, pat_id)
+                validate_med_statement = vonk_session.post(f'{server_url}/MedicationStatement/$validate',
+                                                        data=json.dumps(pat_med_statement.as_json()))
