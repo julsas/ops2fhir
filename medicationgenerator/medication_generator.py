@@ -1,3 +1,7 @@
+from typing import List
+import logging
+
+import pandas as pd
 from fhirclient.models import (
     medication,
     meta,
@@ -6,14 +10,11 @@ from fhirclient.models import (
     codeableconcept
 )
 
-from typing import List
-
-import pandas as pd
-
 SYSTEM_UNII = 'http://fdasis.nlm.nih.gov'
 SYSTEM_ASK = 'http://fhir.de/CodeSystem/ask'
 SYSTEM_CAS = 'urn:oid:2.16.840.1.113883.6.61'
 
+logger = logging.getLogger(__name__)
 
 class MedIngredient:
     def __init__(self, codeable_concept):
@@ -32,7 +33,7 @@ class IngredientCodeableConcept:
 
     def to_fhir(self) -> codeableconcept.CodeableConcept:
         ingredient_codeable_concept = codeableconcept.CodeableConcept()
-        ingredient_codeable_concept.coding = self.coding.to_fhir()
+        ingredient_codeable_concept.coding = [code.to_fhir() for code in self.coding]
 
         return ingredient_codeable_concept
 
@@ -70,7 +71,7 @@ class IngredientCoding:
         ingredient_coding.system = self.system
         ingredient_coding.code = self.code
         ingredient_coding.display = self.display
-        ingredient_coding.extension = self.extension
+        ingredient_coding.extension = [ext.to_fhir() for ext in self.extension]
 
         return ingredient_coding
 
@@ -87,7 +88,7 @@ class Medication:
         fhir_meta.profile = [self.meta_profile]
         fhir_medication.meta = fhir_meta
 
-        fhir_medication.ingredient = self.ingredient.to_fhir()
+        fhir_medication.ingredient = [self.ingredient.to_fhir()]
 
         return fhir_medication
 
@@ -106,17 +107,21 @@ class MedicationGenerator:
 
     def __iter__(self):
         self.n = 0
+        self.ops_df_iter = self.ops_df.iterrows()
         return self
 
     def __next__(self):
         if self.n >= len(self.ops_df):
             raise StopIteration
 
-        # TODO valid if this works
-        result = self.generate(next(self.ops_df.itertuples(index=False)))
-        self.n += 1
-
-        return result
+        try:
+            result = self.generate(next(self.ops_df_iter)[1])
+        except Exception as e:
+            logger.warning(f'Failed to generate Medication: {e}')
+            result = None
+        finally:
+            self.n += 1
+            return result
 
     def generate(self, row):
 
@@ -134,13 +139,12 @@ class MedicationGenerator:
 
         return med
 
-
     def __generate_ingredient_extension(self) -> IngredientExtension:
         ingredient_extension = IngredientExtension(
-            url = self.extension_url,
-            coding_system = self.extension_coding_system,
-            coding_code = self.extension_coding_code,
-            coding_display = self.extension_coding_display
+            url=self.extension_url,
+            coding_system=self.extension_system,
+            coding_code=self.extension_code,
+            coding_display=self.extension_display
         )
 
         return ingredient_extension
@@ -148,12 +152,14 @@ class MedicationGenerator:
     def __generate_ingredient_codings(self, row, ingredient_ext) -> List[IngredientCoding]:
         ingredient_codings = []
 
+        display = row[self.coding_display_col]
+        if display is None or type(display) != str:
+            raise Exception('Display value not valid')
+
         for col_name in self.coding_col_names:
-
-            if row[col_name] is None:
-                continue
-
             code = row[col_name]
+            if code is None or type(code) != str:
+                continue
 
             col_name = col_name.lower()
             if 'unii' in col_name:
@@ -167,13 +173,14 @@ class MedicationGenerator:
 
             ingredient_coding = IngredientCoding(
                 code=code,
-                display=row[self.coding_display_col],
+                display=display,
                 ext=[ingredient_ext],
                 system=system
             )
 
             ingredient_codings.append(ingredient_coding)
 
+        if not ingredient_codings:
+            raise Exception('There are no values for ingredient codings')
+
         return ingredient_codings
-
-
