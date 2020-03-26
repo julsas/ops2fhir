@@ -1,0 +1,1 @@
+from medicationgenerator.generate import generate_and_post_medications
