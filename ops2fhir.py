@@ -238,7 +238,7 @@ if __name__ == '__main__':
 
     # Vonk server data
     # fhir_test_server = 'http://localhost:4080/'
-    server_url = 'http://s-hdp-diz.charite.de:28181'
+    server_url = 'http://s-hdp-diz.charite.de:28182'
     headers = {
         'Accept': 'application/fhir+json; fhirVersion=4.0',
         'Content-Type': 'application/fhir+json; fhirVersion=4.0'
