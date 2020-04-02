@@ -1,2 +1,2 @@
-from medicationgenerator.generate import generate_and_post_medications
+from medicationgenerator.generate import generate_and_post_medications, generate_and_post
 from medicationgenerator.generator_helpers import OpsCsvReader
