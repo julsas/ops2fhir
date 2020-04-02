@@ -9,12 +9,9 @@ import fhirclient.models.fhirdate as fd
 
 # %%
 ops_data = pd.read_csv('./ops_subs_merged_edit.csv', encoding = 'ISO-8859-1')
-
+ops_data.drop_duplicates(subset='ASK_Substanz_genau', keep='first', inplace=True)
 # %%
 ops_data.head()
-
-# %%
-# for index, row in ops_data.iterrows():
 
 # %%
 valueSet = vs.ValueSet()
@@ -31,14 +28,15 @@ valueSet.description = "Enthaelt alle ASK Codes aus dem OPS Mapping"
 vsCompose = vs.ValueSetCompose()
 vsci = vs.ValueSetComposeInclude()
 vsci.system = "http://fhir.de/CodeSystem/ask"
-vscic = vs.ValueSetComposeIncludeConcept()
 concepts = []
 for index, row in ops_data.iterrows():
+    vscic = vs.ValueSetComposeIncludeConcept()
     vscic.code = f'{row[41]}'
     vscic.display = f'{row[32]}'
     concepts.append(vscic)
     
-vsci.concept = [vscic]
+vsci.concept = concepts
+vsCompose.include = [vsci]
 valueSet.compose = vsCompose
 
 fname = 'valueSet-ops-ask.json'
