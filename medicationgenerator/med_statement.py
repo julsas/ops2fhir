@@ -144,7 +144,7 @@ class Reference:
 
 class MedStatementGenerator:
     def __init__(self, profile_url, status, route_system, route_code_col, route_display_col, ops_text_col,
-                 low_val_col, unit_code_col, unit_col, unit_system, high_val_col, med_id, pat_id, ops_df:pd.DataFrame):
+                 low_val_col, unit_code_col, unit_col, unit_system, high_val_col, ops_df:pd.DataFrame):
         self.profile_url = profile_url
         self.status = status
         self.route_system = route_system
@@ -156,8 +156,6 @@ class MedStatementGenerator:
         self.unit_col = unit_col
         self.unit_system = unit_system
         self.high_val_col = high_val_col
-        self.med_id = med_id
-        self.pat_id = pat_id
 
         self.ops_df = ops_df
 
@@ -181,7 +179,7 @@ class MedStatementGenerator:
             self.n += 1
             return result
 
-    def generate(self, row):
+    def generate(self, row, med_id, pat_id):
         route_coding = MedStatementGenerator.__generate_route_coding(row, self.route_system, self.route_code_col,
                                                                      self.route_display_col)
         route_code = RouteCodeableConcept(route_coding)
@@ -205,12 +203,12 @@ class MedStatementGenerator:
         )
 
         med_reference = Reference(
-            id=self.med_id,
+            id=med_id,
             resource_type=client.ResourceEnum.MEDICATION
         )
 
         pat_reference = Reference(
-            id=self.pat_id,
+            id=pat_id,
             resource_type=client.ResourceEnum.PATIENT
         )
 
