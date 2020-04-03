@@ -144,7 +144,7 @@ class Reference:
 
 class MedStatementGenerator:
     def __init__(self, profile_url, status, route_system, route_code_col, route_display_col, ops_text_col,
-                 low_val_col, unit_code_col, unit_col, unit_system, high_val_col, ops_df:pd.DataFrame):
+                 low_val_col, unit_code_col, unit_col, unit_system, high_val_col, ops_df: pd.DataFrame):
         self.profile_url = profile_url
         self.status = status
         self.route_system = route_system
@@ -180,11 +180,15 @@ class MedStatementGenerator:
             return result
 
     def generate(self, row, med_id, pat_id):
-        route_coding = MedStatementGenerator.__generate_route_coding(row, self.route_system, self.route_code_col,
-                                                                     self.route_display_col)
+        route_coding = self.__generate_route_coding(
+            row=row,
+            system=self.route_system,
+            code_col=self.route_code_col,
+            display_col=self.route_display_col
+        )
         route_code = RouteCodeableConcept(route_coding)
 
-        dose_quantity = MedStatementGenerator.__generate_quantity(
+        dose_quantity = self.__generate_quantity(
             row=row,
             low_val_col=self.low_val_col,
             unit_col=self.unit_col,
@@ -228,10 +232,11 @@ class MedStatementGenerator:
         return med_statement
 
     def __generate_route_coding(self, row, system, code_col, display_col) -> List[RouteCoding]:
+
         route_coding = RouteCoding(
             system=system,
             code=str(row[code_col]),
-            display=row[display_col]
+            display=str(row[display_col])
         )
 
         return [route_coding]
@@ -254,6 +259,12 @@ class MedStatementGenerator:
 
         if not (pd.isnull(row[high_val_col])):
             low = dose_quantity
+            if not isinstance(row[unit_col], str):
+                raise Exception('Unit has wrong data type')
+
+            if not isinstance(row[unit_code_col], str):
+                raise Exception('Unit code has wrong data type')
+
             high = MedQuantity(
                 value=row[high_val_col],
                 unit=row[unit_col],
@@ -268,6 +279,12 @@ class MedStatementGenerator:
         return dose_quantity
 
     def __generate_range_values(self, row, value_col, unit_col, system, code_col):
+        if not isinstance(row[unit_col], str):
+            raise Exception('Unit has wrong data type')
+
+        if not isinstance(row[code_col], str):
+            raise Exception('Unit code has wrong data type')
+
         range_quantity = MedQuantity(
             value=row[value_col],
             unit=row[unit_col],
