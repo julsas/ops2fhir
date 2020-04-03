@@ -1,7 +1,8 @@
-import medicationgenerator
-import pathlib
-import os
 import logging
+import os
+import pathlib
+
+import medicationgenerator
 
 if __name__ == '__main__':
     logging.getLogger().setLevel(logging.INFO)
@@ -30,10 +31,9 @@ if __name__ == '__main__':
     csv_cols += coding_col_names
 
     # read and prepare csv with ops data
-    ops_csv = medicationgenerator.OpsCsvReader('../ops_subs_merged_edit.csv', 'ISO-8859-1', usecols=csv_cols)
-    csv_cols.remove(high_val_col)
-
-    ops_csv.data = ops_csv.data.dropna(subset=csv_cols)
+    subset = csv_cols.remove(high_val_col)
+    ops_csv = medicationgenerator.OpsCsvReader('../ops_subs_merged_edit.csv', 'ISO-8859-1', usecols=csv_cols,
+                                               subset=subset)
 
     ops_csv.comma_to_dot(col_names=numerical_cols)
     ops_csv.as_str(col_names=col_names)
