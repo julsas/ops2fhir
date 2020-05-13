@@ -143,9 +143,10 @@ class Reference:
 
 
 class MedStatementGenerator:
-    def __init__(self, profile_url, status, route_system, route_code_col, route_display_col, ops_text_col,
+    def __init__(self, profile_url, part_of, status, route_system, route_code_col, route_display_col, ops_text_col,
                  low_val_col, unit_code_col, unit_col, unit_system, high_val_col, ops_df: pd.DataFrame):
         self.profile_url = profile_url
+        self.part_of = part_of
         self.status = status
         self.route_system = route_system
         self.route_code_col = route_code_col
@@ -179,7 +180,7 @@ class MedStatementGenerator:
             self.n += 1
             return result
 
-    def generate(self, row, med_id, pat_id):
+    def generate(self, row, med_id, pat_id, proc_id):
         route_coding = self.__generate_route_coding(
             row=row,
             system=self.route_system,
@@ -214,6 +215,11 @@ class MedStatementGenerator:
         pat_reference = Reference(
             id=pat_id,
             resource_type=client.ResourceEnum.PATIENT
+        )
+
+        proc_reference = Reference(
+            id=proc_id,
+            resource_type=client.ResourceEnum.PROCEDURE
         )
 
         # TODO: generate effective period, tmp datetime instead of period!!
@@ -296,8 +302,9 @@ class MedStatementGenerator:
 
 
 class MedicationStatement:
-    def __init__(self, profile_url, status, med_reference, pat_reference, timestamp, dosage):
+    def __init__(self, profile_url, part_of, status, med_reference, pat_reference, timestamp, dosage):
         self.profile_url = profile_url
+        self.part_of = part_of
         self.status = status
         self.med_reference = med_reference
         self.pat_reference = pat_reference
@@ -310,6 +317,8 @@ class MedicationStatement:
         fhir_meta = meta.Meta()
         fhir_meta.profile = [self.profile_url]
         fhir_med_statement.meta = fhir_meta
+
+        fhir_med_statement.partOf = self.part_of.to_fhir()
 
         fhir_med_statement.status = self.status
 
