@@ -17,12 +17,14 @@ SYSTEM_CAS = 'urn:oid:2.16.840.1.113883.6.61'
 logger = logging.getLogger(__name__)
 
 class MedIngredient:
-    def __init__(self, codeable_concept):
+    def __init__(self, codeable_concept, ext):
         self.codeable_concept = codeable_concept
+        self.extension = ext
 
     def to_fhir(self) -> medication.MedicationIngredient:
         fhir_med_ingredient = medication.MedicationIngredient()
         fhir_med_ingredient.itemCodeableConcept = self.codeable_concept.to_fhir()
+        fhir_med_ingredient.extension = [ext.to_fhir() for ext in self.extension]
 
         return fhir_med_ingredient
 
@@ -60,18 +62,18 @@ class IngredientExtension:
 
 
 class IngredientCoding:
-    def __init__(self, system, code, display, ext):
+    def __init__(self, system, code, display):
         self.system = system
         self.code = code
         self.display = display
-        self.extension = ext
+        # self.extension = ext
 
     def to_fhir(self) -> coding.Coding:
         ingredient_coding = coding.Coding()
         ingredient_coding.system = self.system
         ingredient_coding.code = self.code
         ingredient_coding.display = self.display
-        ingredient_coding.extension = [ext.to_fhir() for ext in self.extension]
+        # ingredient_coding.extension = [ext.to_fhir() for ext in self.extension]
 
         return ingredient_coding
 
@@ -126,11 +128,11 @@ class MedicationGenerator:
     def generate(self, row):
 
         ingredient_ext = self.__generate_ingredient_extension()
-        ingredient_codings = self.__generate_ingredient_codings(row, ingredient_ext)
+        ingredient_codings = self.__generate_ingredient_codings(row)
 
         concept = IngredientCodeableConcept(coding=ingredient_codings)
 
-        med_ingredient = MedIngredient(codeable_concept=concept)
+        med_ingredient = MedIngredient(codeable_concept=concept, ext=ingredient_ext)
 
         med = Medication(
             meta_profile=self.meta_profile,
@@ -174,7 +176,7 @@ class MedicationGenerator:
             ingredient_coding = IngredientCoding(
                 code=code,
                 display=display,
-                ext=[ingredient_ext],
+                # ext=[ingredient_ext],
                 system=system
             )
 
