@@ -4,8 +4,15 @@ import pathlib
 
 import medicationgenerator
 
+
 if __name__ == '__main__':
-    logging.getLogger().setLevel(logging.INFO)
+    # logging.getLogger().setLevel(logging.INFO)
+
+    logging.basicConfig(
+        format='%(asctime)s %(levelname)-8s %(message)s',
+        level=logging.DEBUG,
+        datefmt='%Y-%m-%d %H:%M:%S'
+    )
 
     low_val_col = 'Einheit_Wert_min'
     high_val_col = 'Einheit_Wert_max'
