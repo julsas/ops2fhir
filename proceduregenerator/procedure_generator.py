@@ -11,6 +11,12 @@ from fhirclient.models import (
 
 from patientgenerator import client
 
+import logging
+
+
+
+logger = logging.getLogger(__name__)
+
 class CategoryCoding:
     def __init__(self, system, code, display):
         self.system = system
@@ -47,16 +53,16 @@ class ProcedureCodeableConcept:
         return procedure_code
 
 class ProcedureCoding:
-    def __init__(self, system, code, display):
+    def __init__(self, system, code, version):
         self.system = system
         self.code = code
-        self.display = display
+        self.version = version
 
     def to_fhir(self) -> coding.Coding:
         fhir_coding = coding.Coding()
         fhir_coding.system = self.system
         fhir_coding.code = self.code
-        fhir_coding.display = self.display
+        fhir_coding.version = self.version
 
         return fhir_coding
 
@@ -157,21 +163,91 @@ class Procedure:
 
 
 class ProcedureGenerator:
-    def __init__(self, profile_url, status, category_system, category_code, category_display, ops_system, ops_code, ops_display, performed_timestamp, db_data):
+    def __init__(self, profile_url, status, category_system, category_code, category_display, ops_system, ops_code_col, ops_version_col, performed_start_col, performed_end_col):
         self.profile_url = profile_url
         self.status = status
         self.category_system = category_system
         self.category_code = category_code
         self.category_display = category_display
         self.ops_system = ops_system
-        self.ops_code = ops_code
-        self.ops_display = ops_display
-        self.performed_timestamp = performed_timestamp
-        self.db_data = db_data
+        self.ops_code_col = ops_code_col
+        self.ops_version_col = ops_version_col
+        self.performed_start_col = performed_start_col
+        self.performed_end_col = performed_end_col
 
-    def generate(self, pat_id):
+
+    def generate(self, row, pat_id):
+        category = self.__generate_category(
+            system=self.category_system,
+            code=self.category_code,
+            display=self.category_display
+        )
+
+        procedure_code = self.__generate_procedure_code(
+            row=row,
+            system=self.ops_system,
+            code_col=self.ops_code_col,
+            version_col=self.ops_version_col
+        )
+
+        subject = Reference(
+            id=pat_id,
+            resource_type=client.ResourceEnum.PATIENT
+        )
+
+        performed_period = self.__generate_performed_period(
+            row=row,
+            start_col=self.performed_start_col,
+            end_col=self.performed_end_col
+        )
+
         generated_procedure = Procedure(
             profile_url=self.profile_url,
             status=self.status,
-
+            category=category,
+            procedure_code=procedure_code,
+            pat_reference=subject,
+            performed=performed_period
         )
+
+        return generated_procedure
+
+    def __generate_category(self, system, code, display):
+        category_coding = CategoryCoding(
+            system=system,
+            code=code,
+            display=display
+        )
+
+        category = Category(
+            category_coding
+        )
+
+        return category
+
+    def __generate_procedure_code(self, row, system, code_col, version_col):
+        procedure_coding = ProcedureCoding(
+            system=system,
+            code=row[code_col],
+            version=row[version_col]
+        )
+
+        procedure_code = ProcedureCodeableConcept(
+            procedure_coding=procedure_coding
+        )
+
+        return procedure_code
+
+    def __generate_performed_period(self, row, start_col, end_col):
+        start_datetime = FhirDatetime(
+            date_time=row[start_col]
+        )
+        end_datetime = FhirDatetime(
+            date_time=row[end_col]
+        )
+        performed_period = FhirPeriod(
+            start=start_datetime,
+            end=end_datetime
+        )
+
+        return performed_period
