@@ -231,6 +231,7 @@ class MedStatementGenerator:
             status=self.status,
             med_reference=med_reference,
             pat_reference=pat_reference,
+            proc_reference=proc_reference,
             timestamp=fhir_date,
             dosage=med_dosage
         )
@@ -308,6 +309,7 @@ class MedicationStatement:
         self.status = status
         self.med_reference = med_reference
         self.pat_reference = pat_reference
+        self.proc_reference = proc_reference
         self.timestamp = timestamp
         self.dosage = dosage
 
@@ -318,7 +320,7 @@ class MedicationStatement:
         fhir_meta.profile = [self.profile_url]
         fhir_med_statement.meta = fhir_meta
 
-        fhir_med_statement.partOf = self.part_of.to_fhir()
+        fhir_med_statement.partOf = self.proc_reference.to_fhir()
 
         fhir_med_statement.status = self.status
 
