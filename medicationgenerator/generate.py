@@ -1,5 +1,6 @@
 import json
 import logging
+import pathlib
 
 from patientgenerator import client, mypatient
 
@@ -23,6 +24,10 @@ def generate_and_post(base_url, verification, ops_df, coding_col_names, coding_d
         meta_profile=med_profile,
         ops_df=ops_df
     )
+
+    last_names_path = pathlib.Path(last_names_path).absolute()
+    first_names_path = pathlib.Path(first_names_path).absolute()
+    genders_path = pathlib.Path(genders_path).absolute()
 
     pat_generator = mypatient.PatientGenerator(
         profile_url=patient_profile,
