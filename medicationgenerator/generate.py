@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 def generate_and_post(base_url, verification, ops_df, coding_col_names, coding_display_col, extension_url,
                       extension_system, extension_code, extension_display, med_profile, med_statement_profile,
                       patient_profile, last_names_path, first_names_path, genders_path, postal_codes_path, name_use,
-                      ident_system, country, med_statement_status, route_system, route_code_col,
+                      ident_system, country, med_statement_status, route_system, route_code_col, part_of,
                       route_display_col, ops_text_col, low_val_col, unit_code_col, unit_col, unit_system, high_val_col):
     med_generator = medication_generator.MedicationGenerator(
         coding_col_names=coding_col_names,
@@ -43,6 +43,7 @@ def generate_and_post(base_url, verification, ops_df, coding_col_names, coding_d
 
     med_statement_generator = med_statement.MedStatementGenerator(
         profile_url=med_statement_profile,
+        part_of=part_of,
         status=med_statement_status,
         route_system=route_system,
         route_code_col=route_code_col,
