@@ -5,6 +5,7 @@ import pathlib
 from patientgenerator import client, mypatient
 
 from medicationgenerator import medication_generator, med_statement
+from proceduregenerator import procedure_generator
 
 logger = logging.getLogger(__name__)
 
@@ -124,10 +125,6 @@ def generate_and_post_medications(base_url, verification, coding_col_names, codi
         if response.status_code != 200:
             raise Exception(f'Failed to validate medication: {response.content}')
 
-        # response = vonk_client.post_resource(fhir_med, client.ResourceEnum.MEDICATION, False)
-        # if response.status_code != 201:
-        #    raise Exception(f'Failed to post medication: {response.content}')
-
         response_text = json.loads(response.text)
         med_id = response_text['id']
         # print(f'Posted Medication: {med_id}')
@@ -136,3 +133,71 @@ def generate_and_post_medications(base_url, verification, coding_col_names, codi
     print(f'Posted {med_ids.__len__()} Medication resources!')
 
     return med_ids
+
+
+def generate_and_post_procedure(base_url, verification, profile_url, status, category_system, category_code,
+                                category_display, ops_system, ops_code_col, ops_version_col, ops_version, ops_display_col,
+                                performed_start_col, performed_end_col, ops_df, patient_profile, last_names_path,
+                                first_names_path, genders_path, postal_codes_path, name_use, ident_system, country):
+    last_names_path = pathlib.Path(last_names_path).absolute()
+    first_names_path = pathlib.Path(first_names_path).absolute()
+    genders_path = pathlib.Path(genders_path).absolute()
+
+    pat_generator = mypatient.PatientGenerator(
+        profile_url=patient_profile,
+        last_names_path=last_names_path,
+        first_names_path=first_names_path,
+        genders_path=genders_path,
+        postal_codes_path=postal_codes_path,
+        name_use=name_use,
+        ident_system=ident_system,
+        country=country,
+        num_pat=len(ops_df)
+    )
+
+    proc_generator = procedure_generator.ProcedureGenerator(
+        profile_url=profile_url,
+        status=status,
+        category_system=category_system,
+        category_code=category_code,
+        category_display=category_display,
+        ops_system=ops_system,
+        ops_code_col=ops_code_col,
+        ops_version_col=ops_version_col,
+        ops_version=ops_version,
+        ops_display_col=ops_display_col,
+        performed_start_col=performed_start_col,
+        performed_end_col=performed_end_col
+    )
+
+    vonk_client = client.VonkClient(base_url, verification)
+    procedure_ids = []
+    pat_iter = iter(pat_generator)
+    n_rows = len(ops_df)
+    n_row = 0
+
+    for row in ops_df.iterrows():
+        try:
+            pat = next(pat_iter).to_fhir()
+        except Exception as e:
+            logger.error(f'Could not create Patient resource: {e}')
+            continue
+        response = vonk_client.post_resource(pat, client.ResourceEnum.PATIENT, validate_flag=True)
+
+        pat_id = json.loads(response.text)['id']
+
+        try:
+            generated_procedure = proc_generator.generate(row[1], pat_id).to_fhir()
+        except Exception as e:
+            logger.error(f'Could not create Procedure resource: {e}')
+            continue
+        response = vonk_client.post_resource(generated_procedure, client.ResourceEnum.PROCEDURE, validate_flag=True)
+
+        procedure_id = json.loads(response.text)['id']
+        procedure_ids.append(procedure_id)
+
+        n_row += 1
+        print(f'Processed {n_row}/{n_rows}')
+
+
+    return procedure_ids
