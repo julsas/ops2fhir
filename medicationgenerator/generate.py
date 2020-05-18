@@ -136,9 +136,10 @@ def generate_and_post_medications(base_url, verification, coding_col_names, codi
 
 
 def generate_and_post_procedure(base_url, verification, profile_url, status, category_system, category_code,
-                                category_display, ops_system, ops_code_col, ops_version_col, ops_version, ops_display_col,
-                                performed_start_col, performed_end_col, ops_df, patient_profile, last_names_path,
-                                first_names_path, genders_path, postal_codes_path, name_use, ident_system, country):
+                                category_display, ops_system, ops_code_col, ops_display_col, ops_df, patient_profile,
+                                last_names_path, first_names_path, genders_path, postal_codes_path, name_use,
+                                ident_system, country, ops_version_col=None, ops_version=None, performed_start_col=None,
+                                performed_end_col=None):
     last_names_path = pathlib.Path(last_names_path).absolute()
     first_names_path = pathlib.Path(first_names_path).absolute()
     genders_path = pathlib.Path(genders_path).absolute()
@@ -198,6 +199,5 @@ def generate_and_post_procedure(base_url, verification, profile_url, status, cat
 
         n_row += 1
         print(f'Processed {n_row}/{n_rows}')
-
 
     return procedure_ids
