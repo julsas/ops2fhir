@@ -14,7 +14,11 @@ def generate_and_post(base_url, verification, ops_df, coding_col_names, coding_d
                       extension_system, extension_code, extension_display, med_profile, med_statement_profile,
                       patient_profile, last_names_path, first_names_path, genders_path, postal_codes_path, name_use,
                       ident_system, country, med_statement_status, route_system, route_code_col,
-                      route_display_col, ops_text_col, low_val_col, unit_code_col, unit_col, unit_system, high_val_col):
+                      route_display_col, ops_text_col, low_val_col, unit_code_col, unit_col, unit_system, high_val_col,
+                      procedure_profile, procedure_status, procedure_category_system, procedure_category_code,
+                      procedure_category_display, procedure_ops_system, procedure_ops_code,
+                      procedure_ops_version_col=None, procedure_ops_version=None, performed_start_col=None,
+                      performed_end_col=None):
     med_generator = medication_generator.MedicationGenerator(
         coding_col_names=coding_col_names,
         coding_display_col=coding_display_col,
@@ -24,6 +28,21 @@ def generate_and_post(base_url, verification, ops_df, coding_col_names, coding_d
         extension_display=extension_display,
         meta_profile=med_profile,
         ops_df=ops_df
+    )
+
+    proc_generator = procedure_generator.ProcedureGenerator(
+        profile_url=procedure_profile,
+        status=procedure_status,
+        category_system=procedure_category_system,
+        category_code=procedure_category_code,
+        category_display=procedure_category_display,
+        ops_system=procedure_ops_system,
+        ops_code_col=procedure_ops_code,
+        ops_display_col=ops_text_col,
+        ops_version=procedure_ops_version,
+        ops_version_col=procedure_ops_version_col,
+        performed_start_col=performed_start_col,
+        performed_end_col=performed_end_col
     )
 
     last_names_path = pathlib.Path(last_names_path).absolute()
@@ -84,7 +103,17 @@ def generate_and_post(base_url, verification, ops_df, coding_col_names, coding_d
         pat_id = json.loads(response.text)['id']
 
         try:
-            med_stat = med_statement_generator.generate(row[1], med_id, pat_id).to_fhir()
+            proc = proc_generator.generate(row[1], pat_id=pat_id).to_fhir()
+        except Exception as e:
+            logger.error(f'Could not create Procedure resource: {e}')
+            continue
+        response = vonk_client.post_resource(proc, client.ResourceEnum.PROCEDURE, validate_flag=True)
+
+        proc_id = json.loads(response.text)['id']
+
+
+        try:
+            med_stat = med_statement_generator.generate(row[1], med_id, pat_id, proc_id).to_fhir()
         except Exception as e:
             logger.error(f'Could not create MedicationStatement resource: {e}')
             continue
