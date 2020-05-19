@@ -179,7 +179,7 @@ class MedStatementGenerator:
             self.n += 1
             return result
 
-    def generate(self, row, med_id, pat_id):
+    def generate(self, row, med_id, pat_id, proc_id):
         route_coding = self.__generate_route_coding(
             row=row,
             system=self.route_system,
@@ -211,6 +211,11 @@ class MedStatementGenerator:
             resource_type=client.ResourceEnum.MEDICATION
         )
 
+        proc_reference = Reference(
+            id=proc_id,
+            resource_type=client.ResourceEnum.PROCEDURE
+        )
+
         pat_reference = Reference(
             id=pat_id,
             resource_type=client.ResourceEnum.PATIENT
@@ -224,6 +229,7 @@ class MedStatementGenerator:
             profile_url=self.profile_url,
             status=self.status,
             med_reference=med_reference,
+            proc_reference=proc_reference,
             pat_reference=pat_reference,
             timestamp=fhir_date,
             dosage=med_dosage
@@ -296,10 +302,11 @@ class MedStatementGenerator:
 
 
 class MedicationStatement:
-    def __init__(self, profile_url, status, med_reference, pat_reference, timestamp, dosage):
+    def __init__(self, profile_url, status, med_reference, proc_reference, pat_reference, timestamp, dosage):
         self.profile_url = profile_url
         self.status = status
         self.med_reference = med_reference
+        self.proc_reference = proc_reference
         self.pat_reference = pat_reference
         self.timestamp = timestamp
         self.dosage = dosage
@@ -313,8 +320,11 @@ class MedicationStatement:
 
         fhir_med_statement.status = self.status
 
+        # References
+        # TODO: some of the references may be optional!!
         fhir_med_statement.medicationReference = self.med_reference.to_fhir()
         fhir_med_statement.subject = self.pat_reference.to_fhir()
+        fhir_med_statement.partOf = [self.proc_reference.to_fhir()]
 
         if type(self.timestamp) == EffectivePeriod:
             fhir_med_statement.effectivePeriod = self.timestamp.to_fhir()
