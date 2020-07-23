@@ -11,7 +11,7 @@ from fhirclient.models import (
     fhirreference
 )
 
-from medicationgenerator import generator_helpers
+from medicationgenerator import generator_helpers, client
 
 logger = logging.getLogger(__name__)
 
