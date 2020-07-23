@@ -14,7 +14,8 @@ from fhirclient.models import (
     period,
     fhirdate
 )
-from patientgenerator import client, generator_helpers
+
+from medicationgenerator import generator_helpers
 
 logger = logging.getLogger(__name__)
 
