@@ -42,11 +42,12 @@ if __name__ == '__main__':
     # read and prepare csv with ops data
     subset = list(csv_cols)
     subset.remove(high_val_col)
+
     ops_csv = medicationgenerator.OpsCsvReader(
         file_path='../ops_subs_merged_edit.csv',
         encoding='ISO-8859-1',
         usecols=csv_cols,
-        subset=subset
+        subset=subset,
     )
 
     ops_csv.comma_to_dot(col_names=numerical_cols)
@@ -59,7 +60,7 @@ if __name__ == '__main__':
         coding_col_names=coding_col_names,
         coding_display_col=coding_display_col,
         extension_url='https://www.medizininformatik-initiative.de/fhir/core/StructureDefinition/wirkstofftyp',
-        extension_system='https://www.medizininformatik-initiative.de/fhir/core/CodeSystem/Wirkstofftyp',
+        extension_system='https://www.medizininformatik-initiative.de/fhir/core/CodeSystem/wirkstofftyp',
         extension_code='IN',
         extension_display='ingredient',
         med_profile='https://www.medizininformatik-initiative.de/fhir/core/StructureDefinition/Medication',
