@@ -2,7 +2,7 @@ import json
 import logging
 import pathlib
 
-from medicationgenerator import medication_generator, med_statement
+from medicationgenerator import medication_generator, med_statement, client
 from proceduregenerator import procedure_generator
 
 logger = logging.getLogger(__name__)
@@ -56,7 +56,7 @@ def generate_and_post(base_url, verification, ops_df, coding_col_names, coding_d
         ops_df=ops_df
     )
 
-    fhir_client = client.VonkClient(base_url, verification)
+    fhir_client = client.FhirClient(base_url, verification)
 
     med_stat_ids = []
     n_rows = len(ops_df)
@@ -110,7 +110,7 @@ def generate_and_post_medications(base_url, verification, coding_col_names, codi
         ops_df=ops_df
     )
 
-    vonk_client = client.VonkClient(base_url, verification)
+    vonk_client = client.FhirClient(base_url, verification)
     med_ids = []
 
     for med in generator:
@@ -153,7 +153,7 @@ def generate_and_post_procedure(base_url, verification, profile_url, status, cat
         performed_end_col=performed_end_col
     )
 
-    vonk_client = client.VonkClient(base_url, verification)
+    vonk_client = client.FhirClient(base_url, verification)
     procedure_ids = []
     n_rows = len(ops_df)
     n_row = 0
