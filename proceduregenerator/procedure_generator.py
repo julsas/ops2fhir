@@ -10,8 +10,7 @@ from fhirclient.models import (
     extension,
     fhirreference
 )
-
-from medicationgenerator import generator_helpers, client
+from patientgenerator import client, generator_helpers
 
 logger = logging.getLogger(__name__)
 
@@ -96,12 +95,13 @@ class FhirDatetime:
 
 # optional extension
 class RecordedDate:
-    def __init__(self, recorded_datetime):
+    def __init__(self, recorded_datetime, extention_url):
         self.recorded_datetime = recorded_datetime
+        self.extention_url = extention_url
 
     def to_fhir(self) -> extension.Extension:
         fhir_extension = extension.Extension()
-        fhir_extension.url = 'https://simplifier.net/MedizininformatikInitiative-ModulProzeduren/procedure-recordedDate'
+        fhir_extension.url = self.extention_url
         fhir_extension.valueDateTime = self.recorded_datetime.to_fhir()
 
         return fhir_extension
@@ -109,14 +109,15 @@ class RecordedDate:
 
 # optional extension
 class ProcedureIntention:
-    def __init__(self, system, code, display):
+    def __init__(self, system, code, display, extension_url):
         self.system = system
         self.code = code
         self.display = display
+        self.extension_url = extension_url
 
     def to_fhir(self) -> extension.Extension:
         fhir_extension = extension.Extension()
-        fhir_extension.url = 'https://simplifier.net/MedizininformatikInitiative-ModulProzeduren/Durchfuehrungsabsicht'
+        fhir_extension.url = self.extension_url
 
         fhir_coding = coding.Coding()
         fhir_coding.system = self.system
@@ -167,10 +168,11 @@ class Procedure:
 
         return fhir_procedure
 
-
+# TODO: Add recorded date and intention extensions
 class ProcedureGenerator:
     def __init__(self, profile_url, status, category_system, category_code, category_display, ops_system, ops_code_col,
-                 ops_display_col, performed_start_col=None, performed_end_col=None, ops_version_col=None, ops_version=None):
+                 ops_display_col, recorded_date_extension=None, intention_extension=None, performed_start_col=None,
+                 performed_end_col=None, ops_version_col=None, ops_version=None):
         self.profile_url = profile_url
         self.status = status
         self.category_system = category_system
@@ -183,6 +185,8 @@ class ProcedureGenerator:
         self.ops_display_col = ops_display_col
         self.performed_start_col = performed_start_col
         self.performed_end_col = performed_end_col
+        self.recorded_date_extension = recorded_date_extension
+        self.intention_extension = intention_extension
 
     def generate(self, row, pat_id) -> Procedure:
         category = self.__generate_category(

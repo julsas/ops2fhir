@@ -61,7 +61,13 @@ def generate_and_post(base_url, verification, ops_df, coding_col_names, coding_d
     med_stat_ids = []
     n_rows = len(ops_df)
     n_row = 0
-    pat_id = json.loads(fhir_pat)['id']
+
+    if not fhir_pat.id:
+        response = fhir_client.post_resource(fhir_pat, client.ResourceEnum.PATIENT, validate_flag=True)
+        pat_id = json.loads(response.text)['id']
+    else:
+        pat_id = json.loads(fhir_pat)['id']
+
     for row in ops_df.iterrows():
         try:
             med = med_generator.generate(row[1]).to_fhir()
