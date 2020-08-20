@@ -1,15 +1,11 @@
 import json
 import logging
-import os
-import pathlib
 
 from fhirclient.models import patient
 
 import medicationgenerator
 
 if __name__ == '__main__':
-    # logging.getLogger().setLevel(logging.INFO)
-
     logging.basicConfig(
         format='%(asctime)s %(levelname)-8s %(message)s',
         level=logging.DEBUG,
@@ -60,10 +56,8 @@ if __name__ == '__main__':
     ops_csv.comma_to_dot(col_names=numerical_cols)
     ops_csv.as_str(col_names=col_names)
 
-    # 
-
     med_statement_ids = medicationgenerator.generate_and_post(
-        base_url='https://hdp-fhir-dev-pub.charite.de',
+        base_url='http://hapi.fhir.org/baseR4',
         verification=True,
         coding_col_names=coding_col_names,
         coding_display_col=coding_display_col,
