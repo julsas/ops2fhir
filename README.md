@@ -23,7 +23,7 @@ Python script to transform OPS data into FHIR format.
 ## Usage
 * Run ops2fhir.py
 * You will be prompted to specify the URL of your FHIR server
-* The skript will transform example mapping to FHIR an send the resources to the server
+* The script will transform the given example mapping to FHIR and send the resources to the server
 
 ## License
 * [MIT](https://tldrlegal.com/license/mit-license)
