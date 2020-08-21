@@ -1,6 +1,5 @@
 import json
 import logging
-import pathlib
 
 from medicationgenerator import medication_generator, med_statement, client
 from proceduregenerator import procedure_generator
@@ -143,7 +142,6 @@ def generate_and_post_procedure(base_url, verification, profile_url, status, cat
                                 category_display, ops_system, ops_code_col, ops_display_col, ops_df, fhir_pat,
                                 ops_version_col=None, ops_version=None, performed_start_col=None,
                                 performed_end_col=None):
-
     proc_generator = procedure_generator.ProcedureGenerator(
         profile_url=profile_url,
         status=status,
