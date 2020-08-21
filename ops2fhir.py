@@ -1,5 +1,7 @@
 import json
 import logging
+import tkinter as tk
+from tkinter import simpledialog, messagebox
 
 from fhirclient.models import patient
 
@@ -11,6 +13,25 @@ if __name__ == '__main__':
         level=logging.DEBUG,
         datefmt='%Y-%m-%d %H:%M:%S'
     )
+
+    # User input
+    flag = True
+    while flag:
+        window = tk.Tk()
+        window.withdraw()
+        user_in = simpledialog.askstring(title="FHIR Server", prompt="Enter your server's base URL:")
+
+        if user_in == None:
+            flag = False
+            exit()
+        elif type(user_in) == str and not user_in:
+            warning = messagebox.askyesno(title='Missing entry', message='Program can\'t run without a server URL. Are you sure you want to continue?')
+            if warning:
+                flag = False
+                exit()
+
+
+
 
     # Post example patient and get ID
     with open('Patient-example.json', 'r') as f:
@@ -57,7 +78,7 @@ if __name__ == '__main__':
     ops_csv.as_str(col_names=col_names)
 
     med_statement_ids = medicationgenerator.generate_and_post(
-        base_url='http://hapi.fhir.org/baseR4',
+        base_url=user_in,
         verification=True,
         coding_col_names=coding_col_names,
         coding_display_col=coding_display_col,
