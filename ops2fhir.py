@@ -29,6 +29,10 @@ if __name__ == '__main__':
             if warning:
                 flag = False
                 exit()
+            else:
+                flag = False
+        else:
+            flag = False
 
 
 
